@@ -130,8 +130,8 @@ A estrutura do projeto é organizada para manter a separação de responsabilida
 1. Clone o repositório:
 
     ```bash
-        git clone https://github.com/anamariapego/golang-social-network-api.git
-        cd golang-social-network-api
+    git clone https://github.com/anamariapego/golang-social-network-api.git
+    cd golang-social-network-api
     ```
 
 2. Configure o banco de dados PostgreSQL:
@@ -139,26 +139,26 @@ A estrutura do projeto é organizada para manter a separação de responsabilida
 * Crie um banco de dados chamado social_network (ou outro nome de sua preferência).
 * Configure as variáveis de ambiente no arquivo `.env` com as credenciais do banco:
     ```
-        DB_HOST=localhost
-        DB_PORT=5432
-        DB_USER=seu_usuario
-        DB_PASSWORD=sua_senha
-        DB_NAME=social_network
+    DB_HOST=localhost
+    DB_PORT=5432
+    DB_USER=seu_usuario
+    DB_PASSWORD=sua_senha
+    DB_NAME=social_network
     ```
 
 3. Instale as dependências do projeto:
 
     ```bash
-        go mod tidy
+    go mod tidy
     ```
 
 4. Execute o projeto:
 
     ```bash
-        go run main.go
+    go run main.go
     ```
 
-    A aplicação estará disponível em: [http://localhost:2468](http://localhost:2468).
+    A aplicação estará disponível em: http://localhost:2468.
 
 ## Considerações Finais
 Esse projeto foi uma excelente oportunidade de aplicar meus conhecimentos de Golang em uma aplicação real e prática. Durante o desenvolvimento, explorei conceitos de segurança, autenticação, manipulação de banco de dados, construção de APIs RESTful e documentação, além de aprender a utilizar diversas ferramentas e pacotes para melhorar a arquitetura e a performance da aplicação.
