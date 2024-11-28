@@ -49,7 +49,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("Id inserido: %d", userId)))
+	w.Write([]byte(fmt.Sprintf("Usuário criado com sucesso: id %d", userId)))
 }
 
 // // GetUsers busca todos os usuários
