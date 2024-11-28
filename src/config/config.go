@@ -38,7 +38,7 @@ func Load() {
 	// Converte a string para inteiro
 	dbPort, err := strconv.Atoi(os.Getenv("DB_PORT"))
 	if err != nil {
-		fmt.Printf("Erro ao converter DB_PORT para inteiro: %v\n", err)
+		fmt.Printf("erro ao converter DB_PORT para inteiro: %v\n", err)
 		return
 	}
 
