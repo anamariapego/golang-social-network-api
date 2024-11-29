@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"golang-social-network-api/src/auth"
 	"log"
 	"net/http"
@@ -19,7 +20,7 @@ func Logger(next http.HandlerFunc) http.HandlerFunc {
 func Authenticate(next http.HandlerFunc) http.HandlerFunc { 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := auth.ValideteToken(r); err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, fmt.Sprintf("erro de autenticação: %v", err), http.StatusUnauthorized)
 			return
 		}
 		next(w, r)

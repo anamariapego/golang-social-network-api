@@ -64,11 +64,14 @@ func returnKeyValidate(token *jwt.Token) (interface{}, error) {
 
 // ExtractUserId extrai o id do usuário dentro do token
 func ExtractUserId(r *http.Request) (uint64, error) {
+	// Extrair o token do cabeçalho
 	tokenString := extractToken(r)
 	token, err := jwt.Parse(tokenString, returnKeyValidate)
 	if err != nil {
 		return 0, err 
 	}
+
+	fmt.Println(token)
 
 	if permissions, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		userId, err := strconv.ParseUint(fmt.Sprintf("%.0f", permissions["userId"]), 10, 64)

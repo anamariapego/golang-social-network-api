@@ -3,12 +3,17 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"golang-social-network-api/src/auth"
 	"golang-social-network-api/src/database"
 	"golang-social-network-api/src/models"
 	"golang-social-network-api/src/repositories"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 // CreateUser cria usuário
@@ -32,6 +37,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
 		log.Printf("erro na conexão com o banco de dados: %v\n", err)
@@ -52,173 +58,183 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("Usuário criado com sucesso: id %d", userId)))
 }
 
-// // GetUsers busca todos os usuários
-// func GetUsers(w http.ResponseWriter, r *http.Request) {
-// 	nameOrNikck := strings.ToLower(r.URL.Query().Get("user"))
+// GetUsers busca todos os usuários
+func GetUsers(w http.ResponseWriter, r *http.Request) {
+	nameOrNikck := strings.ToLower(r.URL.Query().Get("user"))
 
-// 	// Conexão com o banco
-// 	db, err := database.Connect()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
+	// Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 
-// 	repos := repositories.NewReposUsers(db)
-// 	users, err := repos.Search(nameOrNikck)
-// 	if err != nil {
-// 		http.Error(w, "erro ao buscar o usuário no banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
+	repos := repositories.NewReposUsers(db)
+	users, err := repos.Search(nameOrNikck)
+	if err != nil {
+		http.Error(w, "erro ao buscar o usuário no banco de dados", http.StatusBadRequest)
+		return
+	}
 
-// 	// Serializar a resposta em JSON
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
+	// Serializar a resposta em JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
-// 	err = json.NewEncoder(w).Encode(users)
-// 	if err != nil {
-// 		http.Error(w, "Erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-// 		return
-// 	}
+	err = json.NewEncoder(w).Encode(users)
+	if err != nil {
+		http.Error(w, "Erro ao formatar a resposta em JSON", http.StatusInternalServerError)
+		return
+	}
 
-// }
+}
 
-// // GetUser busca uma usuário
-// func GetUser(w http.ResponseWriter, r *http.Request) {
-// 	params := mux.Vars(r)
+// GetUser busca uma usuário
+func GetUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
 
-// 	fmt.Println(params)
+	fmt.Println(params)
 
-// 	userId, err := strconv.ParseUint(params["id"], 10, 64)
-// 	if err != nil {
-// 		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
-// 		return
-// 	}
+	userId, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
+		return
+	}
 
-// 	// Conexão com o banco
-// 	db, err := database.Connect()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
+	// Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 
-// 	repos := repositories.NewReposUsers(db)
-// 	user, err := repos.SearchId(userId)
-// 	if err != nil {
-// 		http.Error(w, "erro ao buscar o id", http.StatusBadRequest)
-// 		return
-// 	}
+	repos := repositories.NewReposUsers(db)
+	user, err := repos.SearchId(userId)
+	if err != nil {
+		http.Error(w, "erro ao buscar o id", http.StatusBadRequest)
+		return
+	}
 
-// 	// Serializar a resposta em JSON
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
+	// Serializar a resposta em JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
-// 	err = json.NewEncoder(w).Encode(user)
-// 	if err != nil {
-// 		http.Error(w, "Erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-// 		return
-// 	}
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
+		return
+	}
 
-// }
+}
 
-// // UpdateUser atualiza um usuário
-// func UpdateUser(w http.ResponseWriter, r *http.Request) {
-// 	// parametro da requisição
-// 	params := mux.Vars(r)
-// 	userId, err := strconv.ParseUint(params["id"], 10, 64)
-// 	if err != nil {
-// 		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
-// 		return
-// 	}
+// UpdateUser atualiza as informações de um usuário
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	// parâmetros da requisição
+	params := mux.Vars(r)
 
-// 	// Ler usuario do token
-// 	userIdToken, err := auth.ExtractUserId(r)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusUnauthorized)
-// 		return
-// 	}
+	userId, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
+		return
+	}
 
-// 	if userId != userIdToken {
-// 		http.Error(w, "Unauthorized access", http.StatusForbidden)
-// 		return
-// 	}
+	// Ler usuario do token
+	userIdToken, err := auth.ExtractUserId(r)
+	fmt.Println(userIdToken)
+	if err != nil {
+		http.Error(w, "token ausente ou inválido", http.StatusUnauthorized)
+		return
+	}
 
-// 	// ler a requisição 
-// 	corpusRequest, err := ioutil.ReadAll(r.Body)
-// 	if err != nil {
-// 		http.Error(w, "erro", http.StatusInternalServerError)
-// 		return
-// 	}
+	if userId != userIdToken {
+		http.Error(w, "acesso não autorizado", http.StatusForbidden)
+		return
+	}
 
-// 	var user models.User
-// 	if err = json.Unmarshal(corpusRequest, &user); err != nil {
-// 		http.Error(w, "erro na conversão json para struct", http.StatusBadRequest)
-// 		return
-// 	}
+	// Ler o corpo da requisição 
+	corpusRequest, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "erro ao ler corpo da requisição", http.StatusInternalServerError)
+		return
+	}
 
-// 	if err = user.Prepare("edit"); err != nil {
-// 		http.Error(w, "erro na edicao", http.StatusBadRequest)
-// 		return
-// 	}
+	var user models.User
+	if err = json.Unmarshal(corpusRequest, &user); err != nil {
+		log.Printf("erro na conversão JSON: %v", err)
+		http.Error(w, "erro na conversão json para struct", http.StatusBadRequest)
+		return
+	}
 
-// 	db, err := database.Connect()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
+	if err = user.Prepare("edit"); err != nil {
+		http.Error(w, "erro na edição das informações", http.StatusBadRequest)
+		return
+	}
 
-// 	repos := repositories.NewReposUsers(db)
-// 	if err = repos.Update(userId, user); err != nil {
-// 		http.Error(w, "erro", http.StatusBadRequest)
-// 		return
-// 	}
+	// Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 
-// 	// Serializar a resposta em JSON
-// 	w.WriteHeader(http.StatusOK)
+	// Atualizar no repositório
+	repos := repositories.NewReposUsers(db)
+	if err = repos.Update(userId, user); err != nil {
+		http.Error(w, "erro ao atualizar usuário", http.StatusInternalServerError)
+		return
+	}
 
-// }
+	// Resposta com uma string
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("informações atualizadas")
 
-// // DeleteUser deletar um usuário
-// func DeleteUser(w http.ResponseWriter, r *http.Request) {
-// 	// parametro da requisição
-// 	params := mux.Vars(r)
-// 	userId, err := strconv.ParseUint(params["id"], 10, 64)
-// 	if err != nil {
-// 		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
-// 		return
-// 	}
+}
 
-// 	// Ler usuario do token
-// 	userIdToken, err := auth.ExtractUserId(r)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusUnauthorized)
-// 		return
-// 	}
+// DeleteUser deletar um usuário
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	// parâmetros da requisição
+	params := mux.Vars(r)
+	userId, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
+		return
+	}
 
-// 	if userId != userIdToken {
-// 		http.Error(w, "Unauthorized access", http.StatusForbidden)
-// 		return
-// 	}
+	// Ler usuário do token
+	userIdToken, err := auth.ExtractUserId(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 
-// 	db, err := database.Connect()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
+	if userId != userIdToken {
+		http.Error(w, "acesso não autorizado", http.StatusForbidden)
+		return
+	}
 
-// 	repos := repositories.NewReposUsers(db)
-// 	if err = repos.Delete(userId); err != nil {
-// 		http.Error(w, "erro", http.StatusBadRequest)
-// 		return
-// 	}
+ 	// Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 
-// 	// Serializar a resposta em JSON
-// 	w.WriteHeader(http.StatusOK)
+	repos := repositories.NewReposUsers(db)
+	if err = repos.Delete(userId); err != nil {
+		http.Error(w, "erro", http.StatusBadRequest)
+		return
+	}
 
-// }
+	// Serializar a resposta em JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("usuário deletado")
+
+}
 
 // // FollowerUserd permite usuário seguir outro usuário
 // func FollowerUserd(w http.ResponseWriter, r *http.Request) {
@@ -229,7 +245,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	// Id do parametro
+// 	// Id do parâmetros
 // 	params := mux.Vars(r)
 // 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 // 	if err != nil {
@@ -242,7 +258,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	db, err := database.Connect()
+//  // Conexão com o banco de dados
+// 	db, err := database.ConnectDB()
 // 	if err != nil {
 // 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
 // 		return
@@ -268,7 +285,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	// Id do parametro
+// 	// Id do parâmetros
 // 	params := mux.Vars(r)
 // 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 // 	if err != nil {
@@ -280,8 +297,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // 		http.Error(w, "não é possível parar de seguir você mesmo", http.StatusForbidden)
 // 		return
 // 	}
-
-// 	db, err := database.Connect()
+//  // Conexão com o banco de dados
+// 	db, err := database.ConnectDB()
 // 	if err != nil {
 // 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
 // 		return
@@ -303,7 +320,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // // GetFollowers busca todos os seguidores
 // func GetFollowers(w http.ResponseWriter, r *http.Request) {
 
-// 	// Id do parametro
+// 	// Id do parâmetros
 // 	params := mux.Vars(r)
 // 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 // 	if err != nil {
@@ -311,8 +328,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	// Conexão com o banco
-// 	db, err := database.Connect()
+// 	// Conexão com o banco de dados
+// 	db, err := database.ConnectDB()
 // 	if err != nil {
 // 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
 // 		return
@@ -340,7 +357,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // // GetFollowing busca todos os usuários que um usuário está seguindo
 // func GetFollowing(w http.ResponseWriter, r *http.Request) {
 
-// 	// Id do parametro
+// 	// Id do parâmetros
 // 	params := mux.Vars(r)
 // 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 // 	if err != nil {
@@ -348,8 +365,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	// Conexão com o banco
-// 	db, err := database.Connect()
+// 	// Conexão com o banco de dados
+// 	db, err := database.ConnectDB()
 // 	if err != nil {
 // 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
 // 		return
@@ -384,7 +401,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	// Id do parametro
+// 	// Id do parâmetros
 // 	params := mux.Vars(r)
 // 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 // 	if err != nil {
@@ -406,8 +423,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	// Conexão com o banco
-// 	db, err := database.Connect()
+// 	// Conexão com o banco de dados
+// 	db, err := database.ConnectDB()
 // 	if err != nil {
 // 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
 // 		return
