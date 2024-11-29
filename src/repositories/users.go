@@ -23,7 +23,7 @@ func (repository users) Create(user models.User) (uint64, error) {
 
 	statement, err := repository.db.Prepare(`INSERT INTO users (name_user, nick, email, password_user) VALUES ($1, $2, $3, $4) RETURNING id`)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("erro ao preparar a query de inserção: %w", err)
 	}
 	defer statement.Close()
 
@@ -31,7 +31,7 @@ func (repository users) Create(user models.User) (uint64, error) {
 
 	err = statement.QueryRow(user.NameUser, user.Nick, user.Email, user.PasswordUser).Scan(&lastIdInsert)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("erro ao executar a query de inserção: %w", err)
 	}
 
 	return uint64(lastIdInsert), nil
@@ -46,7 +46,7 @@ func (repository users) Search(nameOrNick string) ([]models.User, error) {
 		nameOrNick, nameOrNick,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("erro ao executar a query de seleção: %w", err)
 	}
 	defer rows.Close()
 
@@ -76,7 +76,7 @@ func (repository users) SearchId(Id uint64) (models.User, error) {
 
 	rows, err := repository.db.Query("SELECT id, name_user, nick, email, created_at FROM users WHERE id = $1",Id)
 	if err != nil {
-		return models.User{}, err
+		return models.User{}, fmt.Errorf("erro ao executar a query de seleção por id: %w", err)
 	}
 	defer rows.Close()
 
@@ -100,12 +100,12 @@ func (repository users) SearchId(Id uint64) (models.User, error) {
 func (repository users) Update(Id uint64, user models.User) (error) {
 	statement, err := repository.db.Prepare(`UPDATE users SET name_user = $1, nick = $2, email = $3 WHERE id = $4`)
 	if err != nil {
-		return nil
+		return fmt.Errorf("erro ao preparar a query de atualização: %w", err)
 	}
 	defer statement.Close()
 
 	if _, err = statement.Exec(user.NameUser, user.Nick, user.Email, Id); err != nil {
-		return nil
+		return fmt.Errorf("erro ao executar a query de atualização: %w", err)
 	}
 	return nil
 }
@@ -114,12 +114,12 @@ func (repository users) Update(Id uint64, user models.User) (error) {
 func (repository users) Delete(Id uint64) (error) {
 	statement, err := repository.db.Prepare(`DELETE FROM users WHERE id = $1`)
 	if err != nil {
-		return nil
+		return fmt.Errorf("erro ao preparar consulta de deleção: %w", err)
 	}
 	defer statement.Close()
 
 	if _, err = statement.Exec(Id); err != nil {
-		return nil
+		return fmt.Errorf("erro ao executar a deleção do usuário com id %d: %w", Id, err)
 	}
 	return nil
 }
@@ -129,7 +129,7 @@ func (repository users) Delete(Id uint64) (error) {
 func (repository users) SearchEmail(email string) (models.User, error) {
 	rows, err := repository.db.Query("SELECT id, password_user FROM users WHERE email = $1",email)
 	if err != nil {
-		return models.User{}, err
+		return models.User{}, fmt.Errorf("erro ao executar a query de seleção: %w", err)
 	}
 	defer rows.Close()
 
@@ -137,7 +137,7 @@ func (repository users) SearchEmail(email string) (models.User, error) {
 
 	if rows.Next() {
 		if err = rows.Scan(&user.Id, &user.PasswordUser); err != nil {
-			return models.User{}, err
+			return models.User{}, fmt.Errorf("erro ao escanear os dados do usuário: %w", err)
 		}
 	}
 

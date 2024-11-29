@@ -16,33 +16,33 @@ var routerUsers = []Routes{
 		Authentication: 	false,
 	},
 	// Rota para buscar usuários
-	// {
-	// 	URI: "/users",
-	// 	Method: http.MethodGet,
-	// 	Function: controllers.GetUsers,
-	// 	Authentication: true,
-	// },
-	// 	// Rota para buscar um usuário
-	// {
-	// 	URI: "/users/{id}",
-	// 	Method: http.MethodGet,
-	// 	Function: controllers.GetUser,
-	// 	Authentication: true,
-	// },
-	// // Rota para inserir um usuário
-	// {
-	// 	URI: "/users/{id}",
-	// 	Method: http.MethodPut,
-	// 	Function: controllers.UpdateUser,
-	// 	Authentication: true,
-	// },
-	// // Rota para deletar usuário
-	// {
-	// 	URI: "/users/{id}",
-	// 	Method: http.MethodDelete,
-	// 	Function: controllers.DeleteUser,
-	// 	Authentication: true,
-	// },
+	{
+		URI: 				"/users",
+		Method: 			http.MethodGet,
+		Function: 			controllers.GetUsers,
+		Authentication: 	true,
+	},
+		// Rota para buscar um usuário
+	{
+		URI: 				"/users/{id}",
+		Method: 			http.MethodGet,
+		Function: 			controllers.GetUser,
+		Authentication: 	true,
+	},
+	// Rota para atualizar informações de um usuário
+	{
+		URI: 				"/users/{id}",
+		Method: 			http.MethodPut,
+		Function: 			controllers.UpdateUser,
+		Authentication: 	true,
+	},
+	// Rota para deletar usuário
+	{
+		URI: 				"/users/{id}",
+		Method: 			http.MethodDelete,
+		Function: 			controllers.DeleteUser,
+		Authentication: 	true,
+	},
 	// // Rota para seguir usuário
 	// {
 	// 	URI: "/users/{id}/follower",
