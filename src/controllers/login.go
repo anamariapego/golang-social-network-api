@@ -41,7 +41,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = security.ValidatePassword(user.PasswordUser, userSalveDB.PasswordUser); err != nil {
-		http.Error(w, "email ou password inválido", http.StatusUnauthorized)
+		http.Error(w, "email ou senha inválido", http.StatusUnauthorized)
 		return
 	}
 
