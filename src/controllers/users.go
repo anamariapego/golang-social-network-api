@@ -7,6 +7,7 @@ import (
 	"golang-social-network-api/src/database"
 	"golang-social-network-api/src/models"
 	"golang-social-network-api/src/repositories"
+	"golang-social-network-api/src/security"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -407,76 +408,74 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// // UpdatePassword atualizar senha
-// func UpdatePassword(w http.ResponseWriter, r *http.Request) {
+// UpdatePassword atualizar senha do usuário
+func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
-// 	// pega o id do token
-// 	userIdToken, err := auth.ExtractUserId(r)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusUnauthorized)
-// 		return
-// 	}
+	// Id do token
+	userIdToken, err := auth.ExtractUserId(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 
-// 	// Id do parâmetros
-// 	params := mux.Vars(r)
-// 	userId, err := strconv.ParseUint(params["id"], 10, 64)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	// Id do parâmetros
+	params := mux.Vars(r)
+	userId, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// 	if userId != userIdToken {
-// 		http.Error(w, "não é possível atualizar senha de outro usuário", http.StatusForbidden)
-// 		return
-// 	}
+	if userId != userIdToken {
+		http.Error(w, "não é possível atualizar senha de outro usuário", http.StatusForbidden)
+		return
+	}
 
-// 	fmt.Println("passou 1")
+	corpusRequest, err := ioutil.ReadAll(r.Body)
+	var password models.Password
+	if err = json.Unmarshal(corpusRequest, &password); err != nil {
+		http.Error(w, "erro no corpo da requisição", http.StatusBadRequest)
+		return
+	}
 
-// 	corpusRequest, err := ioutil.ReadAll(r.Body)
-// 	var password models.Password
-// 	if err = json.Unmarshal(corpusRequest, &password); err != nil {
-// 		http.Error(w, "erro no corpo da requisição", http.StatusBadRequest)
-// 		return
-// 	}
+	// Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 
-// 	// Conexão com o banco de dados
-// 	db, err := database.ConnectDB()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
+	repos := repositories.NewReposUsers(db)
+	passwordInDB, err := repos.SearchPassword(userId)
+	if err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
 
-// 	fmt.Println("passou 2")
+	// Verifica se as senhas são iguais
+	if err = security.ValidatePassword(password.Current, passwordInDB); err != nil {
+		http.Error(w, "A senha atual não condiz com a senha atual do banco", http.StatusUnauthorized)
+		return
+	}
 
-// 	repos := repositories.NewReposUsers(db)
-// 	passwordInDB, err := repos.SearchPassword(userId)
-// 	if err != nil {
-// 		http.Error(w, "", http.StatusInternalServerError)
-// 		return
-// 	}
+	// Adicionar o hash na senha antes de alterar no banco
+	passwordHash, err := security.FuncHash(password.New)
+	if err != nil {
+		http.Error(w, "erro ao adicionar o hash na senha", http.StatusBadRequest)
+		return
+	}
 
-// 	// verifica se as senhas são iguais
-// 	if err = security.ValidetePassword(password.Atual, passwordInDB); err != nil {
-// 		http.Error(w, "A senha atual não condiz com a senha atual do banco", http.StatusUnauthorized)
-// 		return
-// 	}
+	if err = repos.UpdatePassword(userId, string(passwordHash)); err != nil {
+		http.Error(w, "erro ao atualizar a senha", http.StatusInternalServerError)
+		return
+	}
 
-// 	// adicionar o hash na senha antes de alterar no banco
-// 	passwordHash, err := security.Hash(password.New)
-// 	if err != nil {
-// 		http.Error(w, "senha com hash", http.StatusBadRequest)
-// 		return
-// 	}
+	// Serializar a resposta em JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
-// 	if err = repos.UpdatePassword(userId, string(passwordHash)); err != nil {
-// 		http.Error(w, "", http.StatusInternalServerError)
-// 		return
-// 	}
+	w.Write([]byte(`"Senha atualizada com sucesso"`))
 
-// 	// Serializar a resposta em JSON
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
-
-// }
+}
 
