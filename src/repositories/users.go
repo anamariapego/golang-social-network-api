@@ -144,6 +144,16 @@ func (repository users) SearchEmail(email string) (models.User, error) {
 	return user, nil
 }
 
+// UserExists verifica se o usuário existe
+func (repository users) UserExists(userId uint64) (bool, error) {
+    var exists bool
+    query := "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)"
+    if err := repository.db.QueryRow(query, userId).Scan(&exists); err != nil {
+        return false, err
+    }
+    return exists, nil
+}
+
 // Follower permite que um usuário siga outro
 func (repository users) Follower(userId, followerId uint64) error {
     statement, err := repository.db.Prepare(`
@@ -152,13 +162,13 @@ func (repository users) Follower(userId, followerId uint64) error {
         ON CONFLICT DO NOTHING
     `)
     if err != nil {
-        return nil
+        return fmt.Errorf("erro ao preparar a consulta de inserção: %v", err)
     }
     defer statement.Close()
 
     // Executa a instrução preparada
     if _, err = statement.Exec(userId, followerId); err != nil {
-        return nil
+        return fmt.Errorf("erro ao executar a consulta de inserção: %v", err)
     }
     return nil
 }
@@ -167,13 +177,13 @@ func (repository users) Follower(userId, followerId uint64) error {
 func (repository users) StopFollower(userId, followerId uint64) error {
     statement, err := repository.db.Prepare(`DELETE FROM followers WHERE user_id = $1 AND follower_id = $2`)
     if err != nil {
-        return nil
+        return fmt.Errorf("erro ao preparar a consulta de deleção: %v", err)
     }
     defer statement.Close()
 
     // Executa a instrução preparada
     if _, err = statement.Exec(userId, followerId); err != nil {
-        return nil
+        return fmt.Errorf("erro ao executar a consulta de deleção: %v", err)
     }
     return nil
 }

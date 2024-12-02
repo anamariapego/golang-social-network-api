@@ -43,34 +43,34 @@ var routerUsers = []Routes{
 		Function: 			controllers.DeleteUser,
 		Authentication: 	true,
 	},
-	// // Rota para seguir usuário
-	// {
-	// 	URI: "/users/{id}/follower",
-	// 	Method: http.MethodPost,
-	// 	Function: controllers.FollowerUserd,
-	// 	Authentication: true,
-	// },
-	// // Rota para parar de seguir um usuário
-	// {
-	// 	URI: "/users/{id}/stop-follower",
-	// 	Method: http.MethodPost,
-	// 	Function: controllers.StopFollowerUserd,
-	// 	Authentication: true,
-	// },
-	// // Rota para parar de seguir um usuário
-	// {
-	// 	URI: "/users/{id}/followers",
-	// 	Method: http.MethodGet,
-	// 	Function: controllers.GetFollowers,
-	// 	Authentication: true,
-	// },
-	// // Rota para parar de seguir um usuário
-	// {
-	// 	URI: "/users/{id}/following",
-	// 	Method: http.MethodGet,
-	// 	Function: controllers.GetFollowing,
-	// 	Authentication: true,
-	// },
+	// Rota para seguir usuário
+	{
+		URI: 				"/users/{id}/follower",
+		Method: 			http.MethodPost,
+		Function: 			controllers.FollowerUserd,
+		Authentication: 	true,
+	},
+	// Rota para parar de seguir um usuário
+	{
+		URI: 				"/users/{id}/stop-follower",
+		Method: 			http.MethodPost,
+		Function: 			controllers.StopFollowerUserd,
+		Authentication: 	true,
+	},
+	// Rota para retornar todos os usuários que está seguindo
+	{
+		URI: 				"/users/{id}/followers",
+		Method: 			http.MethodGet,
+		Function: 			controllers.GetFollowers,
+		Authentication: 	true,
+	},
+	// Rota para retornar os usuários que um usuário especifico segue
+	{
+		URI: "/users/{id}/following",
+		Method: http.MethodGet,
+		Function: controllers.GetFollowing,
+		Authentication: true,
+	},
 	// // Rota para atualizar senha
 	// {
 	// 	URI: "/users/{id}/update-password",

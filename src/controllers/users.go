@@ -236,160 +236,176 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// // FollowerUserd permite usuário seguir outro usuário
-// func FollowerUserd(w http.ResponseWriter, r *http.Request) {
+// FollowerUserd permite o usuário seguir outro usuário
+func FollowerUserd(w http.ResponseWriter, r *http.Request) {
 	
-// 	followerId, err := auth.ExtractUserId(r)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusUnauthorized)
-// 		return
-// 	}
+	followerId, err := auth.ExtractUserId(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 
-// 	// Id do parâmetros
-// 	params := mux.Vars(r)
-// 	userId, err := strconv.ParseUint(params["id"], 10, 64)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	// Id do parâmetros
+	params := mux.Vars(r)
+	userId, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// 	if followerId == userId {
-// 		http.Error(w, "não é possível seguir você mesmo", http.StatusForbidden)
-// 		return
-// 	}
-
-//  // Conexão com o banco de dados
-// 	db, err := database.ConnectDB()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
-
-// 	repos := repositories.NewReposUsers(db)
-// 	if err = repos.Follower(userId, followerId); err != nil {
-// 		http.Error(w, "erro", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	// Serializar a resposta em JSON
-// 	w.WriteHeader(http.StatusOK)
-// }
-
-// // StopFollowerUserd permite parar de seguir um usuário
-// func StopFollowerUserd(w http.ResponseWriter, r *http.Request) {
+	if followerId == userId {
+		http.Error(w, "não é possível seguir você mesmo", http.StatusForbidden)
+		return
+	}
 	
-// 	followerId, err := auth.ExtractUserId(r)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusUnauthorized)
-// 		return
-// 	}
+ 	// Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 
-// 	// Id do parâmetros
-// 	params := mux.Vars(r)
-// 	userId, err := strconv.ParseUint(params["id"], 10, 64)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	repos := repositories.NewReposUsers(db)
+	exists, err := repos.UserExists(followerId)
+	if err != nil {
+		http.Error(w, "Erro ao verificar existência do seguidor", http.StatusInternalServerError)
+		return
+	}
+	if !exists {
+		http.Error(w, "Seguidor não existe", http.StatusBadRequest)
+		return
+	}
 
-// 	if followerId == userId {
-// 		http.Error(w, "não é possível parar de seguir você mesmo", http.StatusForbidden)
-// 		return
-// 	}
-//  // Conexão com o banco de dados
-// 	db, err := database.ConnectDB()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
+	if err = repos.Follower(userId, followerId); err != nil {
+		log.Printf("erro ao seguir o usuário: %v", err)
+		http.Error(w, "erro ao seguir o usuário", http.StatusBadRequest)
+		return
+	}
 
-// 	repos := repositories.NewReposUsers(db)
-// 	if err = repos.StopFollower(userId, followerId); err != nil {
-// 		http.Error(w, "erro", http.StatusBadRequest)
-// 		return
-// 	}
+	// Serializar a resposta em JSON
+	w.WriteHeader(http.StatusOK)
+}
 
-// 	// Serializar a resposta em JSON
-// 	w.WriteHeader(http.StatusOK)
+// StopFollowerUserd permite parar de seguir um usuário
+func StopFollowerUserd(w http.ResponseWriter, r *http.Request) {
+	
+	followerId, err := auth.ExtractUserId(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 
-// }
+	// Id do parâmetros
+	params := mux.Vars(r)
+	userId, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	if followerId == userId {
+		http.Error(w, "não é possível parar de seguir você mesmo", http.StatusForbidden)
+		return
+	}
+ // Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 
-// // GetFollowers busca todos os seguidores
-// func GetFollowers(w http.ResponseWriter, r *http.Request) {
+	repos := repositories.NewReposUsers(db)
+	if err = repos.StopFollower(userId, followerId); err != nil {
+		http.Error(w, "erro", http.StatusBadRequest)
+		return
+	}
 
-// 	// Id do parâmetros
-// 	params := mux.Vars(r)
-// 	userId, err := strconv.ParseUint(params["id"], 10, 64)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	// Serializar a resposta em JSON
+	w.WriteHeader(http.StatusOK)
 
-// 	// Conexão com o banco de dados
-// 	db, err := database.ConnectDB()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
+}
 
-// 	repos := repositories.NewReposUsers(db)
-// 	followers, err := repos.SearchFollowers(userId)
-// 	if err != nil {
-// 		http.Error(w, "Erro ao buscar seguidores", http.StatusInternalServerError)
-// 		return
-// 	}
+// GetFollowers busca todos os seguidores do usuário
+func GetFollowers(w http.ResponseWriter, r *http.Request) {
 
-// 	// Serializar a resposta em JSON
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
+	// Id do parâmetros
+	params := mux.Vars(r)
+	userId, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// 	if err = json.NewEncoder(w).Encode(followers); err != nil {
-// 		http.Error(w, "Erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-// 		return
-// 	}
+	// Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
 
-// }
+	repos := repositories.NewReposUsers(db)
+	followers, err := repos.SearchFollowers(userId)
+	if err != nil {
+		http.Error(w, "erro ao buscar seguidores", http.StatusInternalServerError)
+		return
+	}
 
-// // GetFollowing busca todos os usuários que um usuário está seguindo
-// func GetFollowing(w http.ResponseWriter, r *http.Request) {
+	// Serializar a resposta em JSON
+	w.Header().Set("Content-Type", "application/json")
 
-// 	// Id do parâmetros
-// 	params := mux.Vars(r)
-// 	userId, err := strconv.ParseUint(params["id"], 10, 64)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	// Se não houver seguidores
+	if len(followers) == 0 {
+		http.Error(w, "este usuário não possui seguidores", http.StatusOK)
+		return
+	}
 
-// 	// Conexão com o banco de dados
-// 	db, err := database.ConnectDB()
-// 	if err != nil {
-// 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
-// 		return
-// 	}
-// 	defer db.Close()
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(followers); err != nil {
+		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
+		return
+	}
 
-// 	repos := repositories.NewReposUsers(db)
-// 	users, err := repos.SearchFollowing(userId)
-// 	if err != nil {
-// 		http.Error(w, "Erro ao buscar seguidores", http.StatusInternalServerError)
-// 		return
-// 	}
+}
 
-// 	// Serializar a resposta em JSON
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
+// GetFollowing busca todos os usuários que um usuário especifico está seguindo
+func GetFollowing(w http.ResponseWriter, r *http.Request) {
 
-// 	if err = json.NewEncoder(w).Encode(users); err != nil {
-// 		http.Error(w, "Erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-// 		return
-// 	}
+	// Id do parâmetros
+	params := mux.Vars(r)
+	userId, err := strconv.ParseUint(params["id"], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// }
+	// Conexão com o banco de dados
+	db, err := database.ConnectDB()
+	if err != nil {
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		return
+	}
+	defer db.Close()
+
+	repos := repositories.NewReposUsers(db)
+	users, err := repos.SearchFollowing(userId)
+	if err != nil {
+		http.Error(w, "erro ao buscar usuários seguidos", http.StatusInternalServerError)
+		return
+	}
+
+	// Serializar a resposta em JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(w).Encode(users); err != nil {
+		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
+		return
+	}
+
+}
 
 // // UpdatePassword atualizar senha
 // func UpdatePassword(w http.ResponseWriter, r *http.Request) {
