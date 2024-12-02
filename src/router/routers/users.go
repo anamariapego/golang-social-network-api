@@ -62,20 +62,20 @@ var routerUsers = []Routes{
 		URI: 				"/users/{id}/followers",
 		Method: 			http.MethodGet,
 		Function: 			controllers.GetFollowers,
-		Authentication: 	true,
+		Authentication:		true,
 	},
 	// Rota para retornar os usuários que um usuário especifico segue
 	{
-		URI: "/users/{id}/following",
-		Method: http.MethodGet,
-		Function: controllers.GetFollowing,
-		Authentication: true,
+		URI: 				"/users/{id}/following",
+		Method: 			http.MethodGet,
+		Function: 			controllers.GetFollowing,
+		Authentication: 	true,
 	},
-	// // Rota para atualizar senha
-	// {
-	// 	URI: "/users/{id}/update-password",
-	// 	Method: http.MethodPost,
-	// 	Function: controllers.UpdatePassword,
-	// 	Authentication: true,
-	// },
+	// Rota para atualizar a senha do usuário
+	{
+		URI: 				"/users/{id}/update-password",
+		Method: 			http.MethodPost,
+		Function: 			controllers.UpdatePassword,
+		Authentication: 	true,
+	},
 }
