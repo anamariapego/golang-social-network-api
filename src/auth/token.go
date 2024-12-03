@@ -70,6 +70,7 @@ func ExtractUserId(r *http.Request) (uint64, error) {
 	if err != nil {
 		return 0, err 
 	}
+	fmt.Println("token")
 
 	fmt.Println(token)
 
