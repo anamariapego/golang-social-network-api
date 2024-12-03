@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"errors"
 	"golang-social-network-api/src/models"
 )
 
@@ -23,61 +24,27 @@ func (repository publications) Create(publications models.Publications) (uint64,
 	}
 	defer statement.Close()
 
-	var lastIdInsert uint32
+	var lastIdInsert uint64
 
 	err = statement.QueryRow(publications.Title, publications.Text, publications.AuthorId).Scan(&lastIdInsert)
 	if err != nil {
 		return 0, nil
 	}
 
-	return uint64(lastIdInsert), nil
+	return lastIdInsert, nil
 }
 
-
-// Método para buscar uma publicação
-func (repository publications) SearchId(publicationId uint64) (models.Publications, error) {
-
-	rows, err := repository.db.Query(`
-		SELECT p.*, u.nick
-		FROM publications p
-		INNER JOIN users u ON u.id = p.author_id 
-		WHERE p.id = $1`, publicationId,
-	)
-	if err != nil {
-		return models.Publications{}, err
-	}
-	defer rows.Close()
-
-	// Intera nas linhas
-	var publication models.Publications
-
-	if rows.Next() {
-		if err = rows.Scan(
-			&publication.Id,
-			&publication.Title,
-			&publication.Text,
-			&publication.AuthorId,
-			&publication.Likes,
-			&publication.CreatedAt,
-			&publication.AuthorNick,
-		); err != nil {
-			return models.Publications{}, err
-		}
-	}
-
-	return publication, nil
-}
 
 // Busca as publicações do usuário e de seus seguidores
-func (repository publications) Search(userId uint64) ([]models.Publications, error) {
+func (repository publications) SearchPublications(userId uint64) ([]models.Publications, error) {
 
 	rows, err := repository.db.Query(`
 		SELECT DISTINCT p.*, u.nick
 		FROM publications p
 		INNER JOIN users u ON u.id = p.author_id 
-		INNER JOIN followers f on p.author_id = f.user_id
-		WHERE u.id = $1 OR f.follower_id = $2
-		ORDER BY 1 DESC`, userId, userId,
+		LEFT JOIN followers f ON p.author_id = f.user_id AND f.follower_id = $1
+        WHERE p.author_id = $1 OR f.follower_id IS NOT NULL
+        ORDER BY p.id DESC`, userId,
 	)
 	if err != nil {
 		return nil, err
@@ -108,7 +75,43 @@ func (repository publications) Search(userId uint64) ([]models.Publications, err
 
 }
 
-// Atualiza uma publicação DO USUÁRIO
+
+// Método para buscar uma publicação por id
+func (repository publications) SearchPublicationsId(publicationId uint64) (models.Publications, error) {
+
+	rows, err := repository.db.Query(`
+		SELECT p.*, u.nick
+		FROM publications p
+		INNER JOIN users u ON u.id = p.author_id 
+		WHERE p.id = $1`, publicationId,
+	)
+	if err != nil {
+		return models.Publications{}, err
+	}
+	defer rows.Close()
+
+	// Intera nas linhas
+	var publication models.Publications
+
+	if rows.Next() {
+		if err = rows.Scan(
+			&publication.Id,
+			&publication.Title,
+			&publication.Text,
+			&publication.AuthorId,
+			&publication.Likes,
+			&publication.CreatedAt,
+			&publication.AuthorNick,
+		); err != nil {
+			return models.Publications{}, errors.New("publicação não encontrada")
+		}
+	}
+
+	return publication, nil
+}
+
+
+// Atualiza uma publicação do usuário autenticado
 func (repository publications) Update(publicationId uint64, publication models.Publications) error {
 	statement, err := repository.db.Prepare(`UPDATE publications SET title = $1, text = $2 WHERE id = $3`)
 	if err != nil {
@@ -119,11 +122,10 @@ func (repository publications) Update(publicationId uint64, publication models.P
 	if _, err = statement.Exec(publication.Title, publication.Text, publicationId); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-// DelEte exclui uma publicação do usuário no banco de dados
+// Delete deleta uma publicação do usuário no banco de dados
 func (repository publications) Delete(publicationId uint64) error {
 	statement, err := repository.db.Prepare(`DELETE FROM publications WHERE id = $1`)
 	if err != nil {
@@ -134,7 +136,6 @@ func (repository publications) Delete(publicationId uint64) error {
 	if _, err = statement.Exec(publicationId); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -188,7 +189,6 @@ func (repository publications) Like(publicationId uint64) error {
 	if _, err = statement.Exec(publicationId); err != nil {
 		return err
 	}
-
 	return nil
 }
 

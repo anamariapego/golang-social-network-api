@@ -43,7 +43,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("erro na conexão com o banco de dados: %v\n", err)
 
-		http.Error(w, "erro interno ao tentar conectar ao banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao tentar conectar ao banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -66,7 +66,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -105,7 +105,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -175,7 +175,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -219,7 +219,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
  	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -262,7 +262,7 @@ func FollowerUserd(w http.ResponseWriter, r *http.Request) {
  	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -312,7 +312,7 @@ func StopFollowerUserd(w http.ResponseWriter, r *http.Request) {
  // Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -342,7 +342,7 @@ func GetFollowers(w http.ResponseWriter, r *http.Request) {
 	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -385,7 +385,7 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -441,7 +441,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
-		http.Error(w, "erro ao conectar com o banco de dados", http.StatusBadRequest)
+		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
