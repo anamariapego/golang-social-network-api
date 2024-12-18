@@ -214,3 +214,13 @@ func (repository publications) DisLike(publicationId uint64) error {
 
 	return nil
 }
+
+// UserPublications verifica se a publicação existe
+func (repository publications) ExistPublications(userId uint64) (bool, error) {
+    var exists bool
+    query := "SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1)"
+    if err := repository.db.QueryRow(query, userId).Scan(&exists); err != nil {
+        return false, err
+    }
+    return exists, nil
+}
