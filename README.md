@@ -33,6 +33,8 @@ Apesar de o curso abranger também o desenvolvimento de uma aplicação web, opt
 * **Gorilla Mux**: Framework de roteamento e middleware, usado para criar e organizar as rotas da API.
 * **Godotenv**: Para carregar variáveis de ambiente de um arquivo `.env`, facilitando o gerenciamento de configurações.
 * **Checkmail**: Para validação de endereços de e-mail durante o registro de usuários.
+* **github.com/swaggo/swag/cmd/swag**: Para criar documentação swagger.
+* **github.com/swaggo/http-swagger**: Para criar documentação swagger no navegador.
 
 ## Estrutura do Projeto
 
