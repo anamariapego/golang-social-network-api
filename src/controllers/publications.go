@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"golang-social-network-api/src/auth"
 	"golang-social-network-api/src/database"
 	"golang-social-network-api/src/models"
@@ -123,6 +122,14 @@ func GetPublication(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repos := repositories.NewReposPublications(db)
+
+	// Verifica se a publicação existe
+	exists, err := repos.ExistPublications(publicationId)
+	if err != nil || !exists {
+		http.Error(w, "publicação não encontrada", http.StatusNotFound)
+		return
+	}
+
 	publication, err := repos.SearchPublicationsId(publicationId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -165,6 +172,15 @@ func UpdatePublication(w http.ResponseWriter, r *http.Request) {
 
 	//
 	repos := repositories.NewReposPublications(db)
+
+	// Verifica se a publicação existe
+	exists, err := repos.ExistPublications(publicationId)
+	if err != nil || !exists {
+		http.Error(w, "publicação não encontrada", http.StatusNotFound)
+		return
+	}
+
+
 	publicationInDB, err := repos.SearchPublicationsId(publicationId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -235,13 +251,19 @@ func DeletePublication(w http.ResponseWriter, r *http.Request) {
 
 	//
 	repos := repositories.NewReposPublications(db)
+
+	// Verifica se a publicação existe
+	exists, err := repos.ExistPublications(publicationId)
+	if err != nil || !exists {
+		http.Error(w, "publicação não encontrada", http.StatusNotFound)
+		return
+	}
+
 	publicationInDB, err := repos.SearchPublicationsId(publicationId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Println("passou aqui...")
 
 	// verifica se os ids são iguais
 	if publicationInDB.AuthorId != userId {
@@ -316,6 +338,13 @@ func LikePublication(w http.ResponseWriter, r *http.Request) {
 
 	//
 	repos := repositories.NewReposPublications(db)
+
+	// Verifica se a publicação existe
+	exists, err := repos.ExistPublications(publicationId)
+	if err != nil || !exists {
+		http.Error(w, "publicação não encontrada", http.StatusNotFound)
+		return
+	}
 	if err = repos.Like(publicationId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -346,6 +375,13 @@ func DisLikePublication(w http.ResponseWriter, r *http.Request) {
 
 	//
 	repos := repositories.NewReposPublications(db)
+
+	// Verifica se a publicação existe
+	exists, err := repos.ExistPublications(publicationId)
+	if err != nil || !exists {
+		http.Error(w, "publicação não encontrada", http.StatusNotFound)
+		return
+	}
 	if err = repos.DisLike(publicationId); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

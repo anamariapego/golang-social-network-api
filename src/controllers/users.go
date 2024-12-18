@@ -17,7 +17,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// CreateUser cria usuário
+// CreateUser cria usuário e armazrna no banco de dados
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	// Lê o corpo da requisição
 	corpusRequest, err := ioutil.ReadAll(r.Body)
@@ -207,7 +207,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// Ler usuário do token
 	userIdToken, err := auth.ExtractUserId(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
 		return
 	}
 
@@ -242,15 +242,16 @@ func FollowerUserd(w http.ResponseWriter, r *http.Request) {
 	
 	followerId, err := auth.ExtractUserId(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
 		return
 	}
 
 	// Id do parâmetros
 	params := mux.Vars(r)
+	fmt.Println(params)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Id do usuário inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -268,32 +269,31 @@ func FollowerUserd(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repos := repositories.NewReposUsers(db)
-	exists, err := repos.UserExists(followerId)
-	if err != nil {
-		http.Error(w, "Erro ao verificar existência do seguidor", http.StatusInternalServerError)
-		return
-	}
-	if !exists {
-		http.Error(w, "Seguidor não existe", http.StatusBadRequest)
+
+	// Verifica se o usuário existe
+	exists, err := repos.UserExists(userId)
+	if err != nil || !exists {
+		http.Error(w, "usuário a ser seguido não encontrado", http.StatusInternalServerError)
 		return
 	}
 
-	if err = repos.Follower(userId, followerId); err != nil {
-		log.Printf("erro ao seguir o usuário: %v", err)
-		http.Error(w, "erro ao seguir o usuário", http.StatusBadRequest)
+	// Seguir uusário
+	if err = repos.StopFollower(userId, followerId); err != nil {
+		http.Error(w, "erro ao seguir o usuário", http.StatusInternalServerError)
 		return
 	}
 
 	// Serializar a resposta em JSON
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("Usuário seguido com sucesso")
 }
 
-// StopFollowerUserd permite parar de seguir um usuário
-func StopFollowerUserd(w http.ResponseWriter, r *http.Request) {
+// StopFollowerUser permite parar de seguir um usuário
+func StopFollowerUser(w http.ResponseWriter, r *http.Request) {
 	
 	followerId, err := auth.ExtractUserId(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
 		return
 	}
 
@@ -301,7 +301,7 @@ func StopFollowerUserd(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Id do usuário inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -318,13 +318,23 @@ func StopFollowerUserd(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repos := repositories.NewReposUsers(db)
+
+	// Verifica se o usuário existe
+	exists, err := repos.UserExists(userId)
+	if err != nil || !exists {
+		http.Error(w, "usuário a ser deixado de seguir não encontrado", http.StatusNotFound)
+		return
+	}
+
+	// Parar de seguir o usuário
 	if err = repos.StopFollower(userId, followerId); err != nil {
-		http.Error(w, "erro", http.StatusBadRequest)
+		http.Error(w, "erro ao parar de seguir o usuário", http.StatusInternalServerError)
 		return
 	}
 
 	// Serializar a resposta em JSON
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("Usuário deixado de seguir com sucesso")
 
 }
 
@@ -335,7 +345,7 @@ func GetFollowers(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "id do usuário inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -348,6 +358,16 @@ func GetFollowers(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repos := repositories.NewReposUsers(db)
+
+	// Verifica se o usuário existe
+	exists, err := repos.UserExists(userId)
+	if err != nil || !exists {
+		http.Error(w, "usuário não encontrado", http.StatusNotFound)
+		return
+	}
+
+
+	// Busca os seguidores do uusário
 	followers, err := repos.SearchFollowers(userId)
 	if err != nil {
 		http.Error(w, "erro ao buscar seguidores", http.StatusInternalServerError)
@@ -378,7 +398,7 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "id do usuário inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -391,6 +411,14 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repos := repositories.NewReposUsers(db)
+
+	// Verifica se o usuário existe
+	exists, err := repos.UserExists(userId)
+	if err != nil || !exists {
+		http.Error(w, "usuário não encontrado", http.StatusNotFound)
+		return
+	}
+
 	users, err := repos.SearchFollowing(userId)
 	if err != nil {
 		http.Error(w, "erro ao buscar usuários seguidos", http.StatusInternalServerError)
@@ -399,8 +427,14 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 
 	// Serializar a resposta em JSON
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
+	// Se não houver usuários seguidos
+	if len(users) == 0 {
+		http.Error(w, "O usuário não segue nenhum usuário", http.StatusOK)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 	if err = json.NewEncoder(w).Encode(users); err != nil {
 		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
 		return
@@ -414,7 +448,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	// Id do token
 	userIdToken, err := auth.ExtractUserId(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
 		return
 	}
 
@@ -422,7 +456,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "id do usuário inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -447,6 +481,14 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repos := repositories.NewReposUsers(db)
+
+	// Verifica se o usuário existe
+	exists, err := repos.UserExists(userId)
+	if err != nil || !exists {
+		http.Error(w, "usuário não encontrado", http.StatusNotFound)
+		return
+	}
+
 	passwordInDB, err := repos.SearchPassword(userId)
 	if err != nil {
 		http.Error(w, "", http.StatusInternalServerError)
@@ -475,7 +517,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	w.Write([]byte(`"Senha atualizada com sucesso"`))
+	w.Write([]byte(`"senha atualizada com sucesso"`))
 
 }
 

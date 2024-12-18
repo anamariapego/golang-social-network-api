@@ -54,7 +54,7 @@ var routerUsers = []Routes{
 	{
 		URI: 				"/users/{id}/stop-follower",
 		Method: 			http.MethodPost,
-		Function: 			controllers.StopFollowerUserd,
+		Function: 			controllers.StopFollowerUser,
 		Authentication: 	true,
 	},
 	// Rota para retornar todos os usuários que está seguindo
@@ -64,7 +64,7 @@ var routerUsers = []Routes{
 		Function: 			controllers.GetFollowers,
 		Authentication:		true,
 	},
-	// Rota para retornar os usuários que um usuário especifico segue
+	// Rota para retornar os usuários que um usuário específico segue
 	{
 		URI: 				"/users/{id}/following",
 		Method: 			http.MethodGet,
