@@ -24,7 +24,7 @@ Apesar de o curso abranger também o desenvolvimento de uma aplicação web, opt
 * **Publicações dos Seguidores**: Consultar as publicações dos usuários que um usuário está seguindo.
 * **Curtir e Descurtir Publicações**: Interagir com publicações através de likes e dislikes.
 
-## Tecnologias Utilizadas
+## Tecnologias e Pacotes GoLang Utilizadas
 
 * **Golang**: Linguagem principal para o desenvolvimento da API.
 * **PostgreSQL**: Banco de dados relacional para armazenar os dados de usuários e publicações, acessado com o driver `pq`.
@@ -33,8 +33,9 @@ Apesar de o curso abranger também o desenvolvimento de uma aplicação web, opt
 * **Gorilla Mux**: Framework de roteamento e middleware, usado para criar e organizar as rotas da API.
 * **Godotenv**: Para carregar variáveis de ambiente de um arquivo `.env`, facilitando o gerenciamento de configurações.
 * **Checkmail**: Para validação de endereços de e-mail durante o registro de usuários.
-* **github.com/swaggo/swag/cmd/swag**: Para criar documentação swagger.
-* **github.com/swaggo/http-swagger**: Para criar documentação swagger no navegador.
+* **Swagger**:
+  - **github.com/swaggo/swag/cmd/swag**: Gera documentação Swagger a partir de comentários no código.
+  - **github.com/swaggo/http-swagger**: Serve a documentação Swagger no navegador.
 
 ## Estrutura do Projeto
 
@@ -91,9 +92,13 @@ A estrutura do projeto é organizada para manter a separação de responsabilida
     - Criação e validação de hashes de senhas.
     - Validação de senhas no momento do login.
 
-## Rotas da API
+**Autenticação**
+
+* `POST /login`: Usuário faz login e obtém um token de autenticação.
 
 **Usuários**
+
+Rotas para gerenciamento de usuários, incluindo criação, listagem, atualização e operações de seguimento.
 
 * `POST /users`: Criação de um novo usuário.
 * `GET /users`: Listar todos os usuários.
@@ -106,8 +111,9 @@ A estrutura do projeto é organizada para manter a separação de responsabilida
 * `GET /users/{id}/following`: Buscar os usuários que um usuário está seguindo.
 * `POST /users/{id}/update-password`: Atualizar a senha do usuário.
 
-
 **Publicações**
+
+Rotas para criar, listar, buscar e interagir com publicações.
 
 * `POST /publications`: Criar uma nova publicação.
 * `GET /publications`: Listar todas as publicações.
