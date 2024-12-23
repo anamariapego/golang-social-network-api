@@ -48,13 +48,14 @@ func ValideteToken(r *http.Request) error {
 func extractToken(r *http.Request) string {
 	token := r.Header.Get("Authorization")
 	
-	// o retorno é Bearer e o que precisamos é o token
+	// O retorno é: Bearer token, e o que é necessário é apenas do token
 	if len(strings.Split(token, " ")) == 2 {
 		return strings.Split(token, " ")[1]
 	}
 	return ""
 }
 
+// returnKeyValidate para validar o token
 func returnKeyValidate(token *jwt.Token) (interface{}, error) {
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 		return nil, fmt.Errorf("método de assinatura inesperado: %v", token.Header["alg"])
@@ -70,9 +71,6 @@ func ExtractUserId(r *http.Request) (uint64, error) {
 	if err != nil {
 		return 0, err 
 	}
-	fmt.Println("token")
-
-	fmt.Println(token)
 
 	if permissions, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		userId, err := strconv.ParseUint(fmt.Sprintf("%.0f", permissions["userId"]), 10, 64)

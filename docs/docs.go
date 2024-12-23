@@ -372,6 +372,39 @@ const docTemplate = `
                     "BearerAuth": []
                 }
                 ]
+}},
+            "/users/{id}/publications": {
+            "get": {
+                "summary": "Retorna todas as publicações do usuário",
+                "description": "Retorna as publicações de um usuário específico pelo seu Id",
+                "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "description": "Id do usuário que terá suas publicações retornadas",
+                    "required": true,
+                    "type": "string"
+                },
+                ],
+                "responses": {
+                "200": {
+                "description": "Publicações retornadas com sucesso"
+                },
+                "403": {
+                "description": "Usuário não autorizado a visualizar publicações"
+            },
+            "404": {
+                "description": "Usuário não encontrado"
+            },
+            "500": {
+                "description": "Erro interno ao recuperar publicações"
+            }
+                },
+                "security": [
+                {
+                    "BearerAuth": []
+                }
+                ]
             }
         },
         "/publications": {

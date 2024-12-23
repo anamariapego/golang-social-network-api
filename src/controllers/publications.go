@@ -13,29 +13,34 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Cria uma nova publicação do usuário
+// CreatePublication cria uma nova publicação do usuário autenticado
 func CreatePublication(w http.ResponseWriter, r *http.Request) {
+
+	// Extrai o id do usuário do token
 	userId, err := auth.ExtractUserId(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
+	// Lê o corpo da requisição
 	corpusRequest, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 
+	// Estrutura da publicação
 	var publication models.Publications
 	if err = json.Unmarshal(corpusRequest, &publication); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	// Inserir o autor da publicação
+
+	// Define o id do autor da publicação
 	publication.AuthorId = userId
 
-	// Valida os valores
+	// Valida os campos
 	if err = publication.Prepare(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -49,6 +54,7 @@ func CreatePublication(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Cria um repositório para interagir com o banco de dados
 	repos := repositories.NewReposPublications(db)
 	publication.Id, err = repos.Create(publication) 
 	if err != nil {
@@ -56,27 +62,21 @@ func CreatePublication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar o cabeçalho como JSON e o status como 201 Created
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	// Codificar a publicação em JSON e escrever a resposta
-	if err = json.NewEncoder(w).Encode(publication); err != nil {
-		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-		return
-	}
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, publication)
 }
 
 // GetPublications retorna todas as publicações que aparecem no feed do usuário
 func GetPublications(w http.ResponseWriter, r *http.Request) {
 	
+	// Extrai o id do usuário do token
 	userId, err := auth.ExtractUserId(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	// Conexão com o banco
+	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
@@ -84,6 +84,7 @@ func GetPublications(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Cria um repositório para interagir com o banco de dados
 	repos := repositories.NewReposPublications(db)
 	publications, err := repos.SearchPublications(userId)
 	if err != nil {
@@ -91,29 +92,22 @@ func GetPublications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// Configurar o cabeçalho como JSON e o status como 201 Created
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	// Codificar a publicação em JSON e escrever a resposta
-	if err = json.NewEncoder(w).Encode(publications); err != nil {
-		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-		return
-	}
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, publications)
 }
 
-// GetPublication traz uma única publicação pelo Id
+// GetPublication retorna uma única publicação com base no Id da publicação
 func GetPublication(w http.ResponseWriter, r *http.Request) {
 
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
-
 	publicationId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "id da publicação inválido", http.StatusInternalServerError)
 		return
 	}
 
-	// Conexão com o banco
+	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
@@ -121,6 +115,7 @@ func GetPublication(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Cria um repositório para interagir com o banco de dados
 	repos := repositories.NewReposPublications(db)
 
 	// Verifica se a publicação existe
@@ -132,37 +127,33 @@ func GetPublication(w http.ResponseWriter, r *http.Request) {
 
 	publication, err := repos.SearchPublicationsId(publicationId)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "erro ao buscar a publicação", http.StatusInternalServerError)
 		return
 	}
 
-	// Serializar a resposta em JSON
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	err = json.NewEncoder(w).Encode(publication)
-	if err != nil {
-		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-		return
-	}
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, publication)
 }
 
 // UpdatePublication atualiza os dados de uma publicação
 func UpdatePublication(w http.ResponseWriter, r *http.Request) {
 
+	// Extrai o id do usuário do token
 	userId, err := auth.ExtractUserId(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	publicationId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "id da publicação inválido", http.StatusInternalServerError)
 		return
 	}
 
-	// Conexão com o banco
+	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
@@ -170,7 +161,7 @@ func UpdatePublication(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	//
+	// Cria um repositório para interagir com o banco de dados
 	repos := repositories.NewReposPublications(db)
 
 	// Verifica se a publicação existe
@@ -180,25 +171,26 @@ func UpdatePublication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	publicationInDB, err := repos.SearchPublicationsId(publicationId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// verifica se os ids são iguais
+	// Verifica se os ids são iguais
 	if publicationInDB.AuthorId != userId {
 		http.Error(w, "não é possível atualizar a publicação de outro usuário", http.StatusForbidden)
 		return
 	}
 
+	// Lê o corpo da requisição
 	corpusRequest, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 
+	// Estrutura da publicação
 	var publication models.Publications
 	if err = json.Unmarshal(corpusRequest, &publication); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -215,33 +207,29 @@ func UpdatePublication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar o cabeçalho como JSON e o status como 201 Created
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	// Codificar a publicação em JSON e escrever a resposta
-	if err = json.NewEncoder(w).Encode(publication); err != nil {
-		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-		return
-	}
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, publication)
 }
 
 // DeletePublication deleta os dados de uma publicação
 func DeletePublication(w http.ResponseWriter, r *http.Request) {
 
+	// Extrai o id do usuário do token
 	userId, err := auth.ExtractUserId(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	publicationId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "id da publicação inválido", http.StatusInternalServerError)
 		return
 	}
 
-	// Conexão com o banco
+	// Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
@@ -249,7 +237,7 @@ func DeletePublication(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	//
+	// Cria um repositório para interagir com o banco de dados
 	repos := repositories.NewReposPublications(db)
 
 	// Verifica se a publicação existe
@@ -276,18 +264,19 @@ func DeletePublication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar o cabeçalho como JSON e o status como 201 Created
-	w.Header().Set("Content-Type", "application/json")
+	// Define o cabeçalho da resposta 
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("publicação deletada com sucesso")
 }
 
-// GetPublicationByUser traz todas as publicações de um usuário específica
+// GetPublicationByUser retorna todas as publicações de um usuário específico
 func GetPublicationByUser(w http.ResponseWriter, r *http.Request) {
 
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, "ID do usuário inválido.", http.StatusBadRequest)
+		http.Error(w, "id do usuário inválido.", http.StatusBadRequest)
 		return
 	}
 
@@ -299,8 +288,11 @@ func GetPublicationByUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	repos := repositories.NewReposPublications(db)
+	// Estrutura de publicação
 	var publications []models.Publications
+
+	// Cria um repositório para interagir com o banco de dados
+	repos := repositories.NewReposPublications(db)
 	publications, err = repos.SearchUser(userId) 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -321,10 +313,11 @@ func GetPublicationByUser(w http.ResponseWriter, r *http.Request) {
 // LikePublication é para curtir uma publicação
 func LikePublication(w http.ResponseWriter, r *http.Request) {
 
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	publicationId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "id da publicação inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -336,7 +329,7 @@ func LikePublication(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	//
+	// Cria um repositório para interagir com o banco de dados
 	repos := repositories.NewReposPublications(db)
 
 	// Verifica se a publicação existe
@@ -358,10 +351,11 @@ func LikePublication(w http.ResponseWriter, r *http.Request) {
 // DisLikePublication é para descurtir uma publicação
 func DisLikePublication(w http.ResponseWriter, r *http.Request) {
 
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	publicationId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "id da publicação inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -373,7 +367,7 @@ func DisLikePublication(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	//
+	// Cria um repositório para interagir com o banco de dados
 	repos := repositories.NewReposPublications(db)
 
 	// Verifica se a publicação existe
@@ -390,4 +384,14 @@ func DisLikePublication(w http.ResponseWriter, r *http.Request) {
 	// Configurar o cabeçalho como JSON e o status como 201 Created
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
+}
+
+
+// JsonResponse envia uma resposta JSON padronizada ao cliente.
+func JsonResponse(w http.ResponseWriter, status int, data interface{}) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    if err := json.NewEncoder(w).Encode(data); err != nil {
+        http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
+    }
 }
