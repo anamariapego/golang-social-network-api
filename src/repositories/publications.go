@@ -20,8 +20,8 @@ func NewReposPublications(db *sql.DB) *publications {
 // Método para inserir a publicação no banco de dados
 func (repository publications) Create(publications models.Publications) (uint64, error) {
 	statement, err := repository.db.Prepare(`
-	INSERT INTO publications (title, text, author_id) 
-	VALUES ($1, $2, $3) RETURNING id`,
+	INSERT INTO publications (title, text, author_id, created_at) 
+	VALUES ($1, $2, $3, $4) RETURNING id`,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("erro ao preparar a query de inserção: %w", err)
@@ -189,7 +189,7 @@ func (repository publications) SearchUser(userId uint64) ([]models.Publications,
 func (repository publications) Like(publicationId uint64) error {
 
 	statement, err := repository.db.Prepare(`
-		UPDATE publications '
+		UPDATE publications
 		SET likes = likes + 1 
 		WHERE id = $1`,
 	)

@@ -299,15 +299,14 @@ func GetPublicationByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar o cabeçalho como JSON e o status como 201 Created
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	// Codificar a publicação em JSON e escrever a resposta
-	if err = json.NewEncoder(w).Encode(publications); err != nil {
-		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
+	//  Verifica se o usuário não tem seguidores
+	if len(publications) == 0 {
+		http.Error(w, "este usuário não possui publicações", http.StatusOK)
 		return
 	}
+
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, publications)
 }
 
 // LikePublication é para curtir uma publicação
@@ -343,9 +342,9 @@ func LikePublication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar o cabeçalho como JSON e o status como 201 Created
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
+	// Define o cabeçalho da resposta 
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("publicação curtida com sucesso")
 }
 
 // DisLikePublication é para descurtir uma publicação
@@ -381,9 +380,9 @@ func DisLikePublication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar o cabeçalho como JSON e o status como 201 Created
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
+	// Define o cabeçalho da resposta 
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("publicação descutida com sucesso")
 }
 
 

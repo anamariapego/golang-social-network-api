@@ -56,7 +56,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("Usuário criado com sucesso: id %d", userId)))
+	// Define o cabeçalho da resposta 
+	w.Write([]byte(fmt.Sprintf("usuário criado com sucesso: id %d", userId)))
 }
 
 // GetUsers busca todos os usuários
@@ -264,7 +265,7 @@ func FollowerUserd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = repos.StopFollower(userId, followerId); err != nil {
+	if err = repos.Follower(userId, followerId); err != nil {
 		http.Error(w, "erro ao seguir o usuário", http.StatusInternalServerError)
 		return
 	}
