@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"golang-social-network-api/src/models"
 )
 
@@ -18,9 +19,12 @@ func NewReposPublications(db *sql.DB) *publications {
 
 // Método para inserir a publicação no banco de dados
 func (repository publications) Create(publications models.Publications) (uint64, error) {
-	statement, err := repository.db.Prepare(`INSERT INTO publications (title, text, author_id) VALUES ($1, $2, $3) RETURNING id`)
+	statement, err := repository.db.Prepare(`
+	INSERT INTO publications (title, text, author_id, created_at) 
+	VALUES ($1, $2, $3, $4) RETURNING id`,
+	)
 	if err != nil {
-		return 0, nil
+		return 0, fmt.Errorf("erro ao preparar a query de inserção: %w", err)
 	}
 	defer statement.Close()
 
@@ -28,14 +32,13 @@ func (repository publications) Create(publications models.Publications) (uint64,
 
 	err = statement.QueryRow(publications.Title, publications.Text, publications.AuthorId).Scan(&lastIdInsert)
 	if err != nil {
-		return 0, nil
+		return 0, fmt.Errorf("erro ao executar a query de inserção: %w", err)
 	}
 
 	return lastIdInsert, nil
 }
 
-
-// Busca as publicações do usuário e de seus seguidores
+// Método para buscar as publicações do usuário e de seus seguidores
 func (repository publications) SearchPublications(userId uint64) ([]models.Publications, error) {
 
 	rows, err := repository.db.Query(`
@@ -47,10 +50,11 @@ func (repository publications) SearchPublications(userId uint64) ([]models.Publi
         ORDER BY p.id DESC`, userId,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("erro ao executar a query de seleção: %w", err)
 	}
 	defer rows.Close()
 
+	// Interar nas linhas
 	var publications []models.Publications
 
 	for rows.Next() {
@@ -74,7 +78,6 @@ func (repository publications) SearchPublications(userId uint64) ([]models.Publi
 	return publications, nil
 
 }
-
 
 // Método para buscar uma publicação por id
 func (repository publications) SearchPublicationsId(publicationId uint64) (models.Publications, error) {
@@ -110,31 +113,37 @@ func (repository publications) SearchPublicationsId(publicationId uint64) (model
 	return publication, nil
 }
 
-
 // Atualiza uma publicação do usuário autenticado
 func (repository publications) Update(publicationId uint64, publication models.Publications) error {
-	statement, err := repository.db.Prepare(`UPDATE publications SET title = $1, text = $2 WHERE id = $3`)
+	statement, err := repository.db.Prepare(`
+		UPDATE publications 
+		SET title = $1, text = $2 
+		WHERE id = $3`,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("erro ao preparar a query de atualização: %w", err)
 	}
 	defer statement.Close()
 
 	if _, err = statement.Exec(publication.Title, publication.Text, publicationId); err != nil {
-		return err
+		return fmt.Errorf("erro ao executar a query de atualização: %w", err)
 	}
 	return nil
 }
 
 // Delete deleta uma publicação do usuário no banco de dados
 func (repository publications) Delete(publicationId uint64) error {
-	statement, err := repository.db.Prepare(`DELETE FROM publications WHERE id = $1`)
+	statement, err := repository.db.Prepare(`
+		DELETE FROM publications 
+		WHERE id = $1`,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("erro ao preparar consulta de deleção: %w", err)
 	}
 	defer statement.Close()
 
 	if _, err = statement.Exec(publicationId); err != nil {
-		return err
+		return fmt.Errorf("erro ao executar a deleção da publicação com id %d: %w", publicationId, err)
 	}
 	return nil
 }
@@ -148,7 +157,7 @@ func (repository publications) SearchUser(userId uint64) ([]models.Publications,
 		WHERE p.author_id = $1`, userId,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("erro ao executar a query de seleção: %w", err)
 	}
 	defer rows.Close()
 
@@ -176,18 +185,21 @@ func (repository publications) SearchUser(userId uint64) ([]models.Publications,
 	return publications, nil
 }
 
-
 // Like para curtir uma publicação
 func (repository publications) Like(publicationId uint64) error {
 
-	statement, err := repository.db.Prepare(`UPDATE publications SET likes = likes + 1 WHERE id = $1`)
+	statement, err := repository.db.Prepare(`
+		UPDATE publications
+		SET likes = likes + 1 
+		WHERE id = $1`,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("erro ao preparar a query de atualização: %w", err)
 	}
 	defer statement.Close()
 
 	if _, err = statement.Exec(publicationId); err != nil {
-		return err
+		return fmt.Errorf("erro ao executar a query de atualização: %w", err)
 	}
 	return nil
 }
@@ -201,15 +213,15 @@ func (repository publications) DisLike(publicationId uint64) error {
 		WHEN likes > 0 THEN likes - 1
 		ELSE 0 
 	END
-	WHERE id = $1
-	`)
+	WHERE id = $1`,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("erro ao preparar a query de atualização: %w", err)
 	}
 	defer statement.Close()
 
 	if _, err = statement.Exec(publicationId); err != nil {
-		return err
+		return fmt.Errorf("erro ao executar a query de atualização: %w", err)
 	}
 
 	return nil
@@ -218,8 +230,7 @@ func (repository publications) DisLike(publicationId uint64) error {
 // UserPublications verifica se a publicação existe
 func (repository publications) ExistPublications(userId uint64) (bool, error) {
     var exists bool
-    query := "SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1)"
-    if err := repository.db.QueryRow(query, userId).Scan(&exists); err != nil {
+    if err := repository.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM publications WHERE id = $1)`, userId).Scan(&exists); err != nil {
         return false, err
     }
     return exists, nil

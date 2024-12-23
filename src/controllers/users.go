@@ -17,12 +17,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// CreateUser cria usuário e armazrna no banco de dados
+// CreateUser cria um novo usuário e o armazena no banco de dados
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	// Lê o corpo da requisição
 	corpusRequest, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "falha ao ler a requisição", http.StatusBadRequest)
+		http.Error(w, "erro ao ler a requisição", http.StatusBadRequest)
 		return
 	}
 
@@ -32,7 +32,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Valida valores
+	// Valida os valores 
 	if err = user.Prepare("register"); err != nil {
 		http.Error(w, fmt.Sprintf("erro na validação dos campos: %s", err.Error()), http.StatusBadRequest)
 		return
@@ -48,7 +48,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Repositório para criar um novo usuário no banco de dados
+	// Repositório para criar um novo usuário
 	repository := repositories.NewReposUsers(db)
 	userId, err := repository.Create(user)
 	if err != nil {
@@ -56,7 +56,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("Usuário criado com sucesso: id %d", userId)))
+	// Define o cabeçalho da resposta 
+	w.Write([]byte(fmt.Sprintf("usuário criado com sucesso: id %d", userId)))
 }
 
 // GetUsers busca todos os usuários
@@ -71,6 +72,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Repositório para buscar usuários
 	repos := repositories.NewReposUsers(db)
 	users, err := repos.Search(nameOrNikck)
 	if err != nil {
@@ -78,27 +80,19 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Serializar a resposta em JSON
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	err = json.NewEncoder(w).Encode(users)
-	if err != nil {
-		http.Error(w, "Erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-		return
-	}
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, users)
 
 }
 
-// GetUser busca uma usuário
+// GetUser busca uma usuário específico
 func GetUser(w http.ResponseWriter, r *http.Request) {
+	
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
-
-	fmt.Println(params)
-
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
+		http.Error(w, "id do usuário inválido", http.StatusInternalServerError)
 		return
 	}
 
@@ -110,6 +104,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Repositório para buscar um usuário
 	repos := repositories.NewReposUsers(db)
 	user, err := repos.SearchId(userId)
 	if err != nil {
@@ -117,34 +112,27 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Serializar a resposta em JSON
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	err = json.NewEncoder(w).Encode(user)
-	if err != nil {
-		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-		return
-	}
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, user)
 
 }
 
 // UpdateUser atualiza as informações de um usuário
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	// parâmetros da requisição
+	
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
-
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
+		http.Error(w, "id do usuário inválido", http.StatusInternalServerError)
 		return
 	}
 
-	// Ler usuario do token
+	// Ler o usuário do token
 	userIdToken, err := auth.ExtractUserId(r)
 	fmt.Println(userIdToken)
 	if err != nil {
-		http.Error(w, "token ausente ou inválido", http.StatusUnauthorized)
+		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
 		return
 	}
 
@@ -180,15 +168,14 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Atualizar no repositório
+	// Repositório para atualizar os dados do usuário
 	repos := repositories.NewReposUsers(db)
 	if err = repos.Update(userId, user); err != nil {
 		http.Error(w, "erro ao atualizar usuário", http.StatusInternalServerError)
 		return
 	}
 
-	// Resposta com uma string
-	w.Header().Set("Content-Type", "application/json")
+	// Define o cabeçalho da resposta 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode("informações atualizadas")
 
@@ -196,15 +183,16 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 // DeleteUser deletar um usuário
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	// parâmetros da requisição
+	
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, "erro ao converter params para int", http.StatusInternalServerError)
+		http.Error(w, "id do usuário inválido", http.StatusInternalServerError)
 		return
 	}
 
-	// Ler usuário do token
+	// Ler o usuário do token
 	userIdToken, err := auth.ExtractUserId(r)
 	if err != nil {
 		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
@@ -224,34 +212,33 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Repositório para deletar um usuário
 	repos := repositories.NewReposUsers(db)
 	if err = repos.Delete(userId); err != nil {
 		http.Error(w, "erro", http.StatusBadRequest)
 		return
 	}
 
-	// Serializar a resposta em JSON
-	w.Header().Set("Content-Type", "application/json")
+	// Define o cabeçalho da resposta 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode("usuário deletado")
-
 }
 
 // FollowerUserd permite o usuário seguir outro usuário
 func FollowerUserd(w http.ResponseWriter, r *http.Request) {
 	
+	// Extrair o id do usuário
 	followerId, err := auth.ExtractUserId(r)
 	if err != nil {
 		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
 		return
 	}
 
-	// Id do parâmetros
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
-	fmt.Println(params)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, "Id do usuário inválido", http.StatusBadRequest)
+		http.Error(w, "id do usuário inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -268,6 +255,7 @@ func FollowerUserd(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Repositório para seguir um usuário
 	repos := repositories.NewReposUsers(db)
 
 	// Verifica se o usuário existe
@@ -277,31 +265,31 @@ func FollowerUserd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Seguir uusário
-	if err = repos.StopFollower(userId, followerId); err != nil {
+	if err = repos.Follower(userId, followerId); err != nil {
 		http.Error(w, "erro ao seguir o usuário", http.StatusInternalServerError)
 		return
 	}
 
-	// Serializar a resposta em JSON
+	// Define o cabeçalho da resposta 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode("Usuário seguido com sucesso")
+	json.NewEncoder(w).Encode("usuário seguido com sucesso")
 }
 
 // StopFollowerUser permite parar de seguir um usuário
 func StopFollowerUser(w http.ResponseWriter, r *http.Request) {
 	
+	// Extrair o id do usuário
 	followerId, err := auth.ExtractUserId(r)
 	if err != nil {
 		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
 		return
 	}
 
-	// Id do parâmetros
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
-		http.Error(w, "Id do usuário inválido", http.StatusBadRequest)
+		http.Error(w, "id do usuário inválido", http.StatusBadRequest)
 		return
 	}
 
@@ -309,7 +297,7 @@ func StopFollowerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "não é possível parar de seguir você mesmo", http.StatusForbidden)
 		return
 	}
- // Conexão com o banco de dados
+    // Conexão com o banco de dados
 	db, err := database.ConnectDB()
 	if err != nil {
 		http.Error(w, "erro ao conectar com o banco de dados", http.StatusInternalServerError)
@@ -317,6 +305,7 @@ func StopFollowerUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Repositório para parar de seguir um usuário
 	repos := repositories.NewReposUsers(db)
 
 	// Verifica se o usuário existe
@@ -332,16 +321,16 @@ func StopFollowerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Serializar a resposta em JSON
+	// Define o cabeçalho da resposta 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode("Usuário deixado de seguir com sucesso")
+	json.NewEncoder(w).Encode("usuário deixado de seguir com sucesso")
 
 }
 
 // GetFollowers busca todos os seguidores do usuário
 func GetFollowers(w http.ResponseWriter, r *http.Request) {
 
-	// Id do parâmetros
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
@@ -357,6 +346,7 @@ func GetFollowers(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Repositório para buscar os seguidores do usuário
 	repos := repositories.NewReposUsers(db)
 
 	// Verifica se o usuário existe
@@ -366,35 +356,26 @@ func GetFollowers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-	// Busca os seguidores do uusário
 	followers, err := repos.SearchFollowers(userId)
 	if err != nil {
 		http.Error(w, "erro ao buscar seguidores", http.StatusInternalServerError)
 		return
 	}
 
-	// Serializar a resposta em JSON
-	w.Header().Set("Content-Type", "application/json")
-
-	// Se não houver seguidores
+	//  Verifica se o usuário não tem seguidores
 	if len(followers) == 0 {
 		http.Error(w, "este usuário não possui seguidores", http.StatusOK)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(followers); err != nil {
-		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-		return
-	}
-
+	
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, followers)
 }
 
-// GetFollowing busca todos os usuários que um usuário especifico está seguindo
+// GetFollowing busca todos os usuários que um usuário está seguindo
 func GetFollowing(w http.ResponseWriter, r *http.Request) {
 
-	// Id do parâmetros
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
@@ -410,6 +391,7 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Repositório para buscar os seguidores de um usuário
 	repos := repositories.NewReposUsers(db)
 
 	// Verifica se o usuário existe
@@ -425,34 +407,27 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Serializar a resposta em JSON
-	w.Header().Set("Content-Type", "application/json")
-
 	// Se não houver usuários seguidos
 	if len(users) == 0 {
 		http.Error(w, "O usuário não segue nenhum usuário", http.StatusOK)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(users); err != nil {
-		http.Error(w, "erro ao formatar a resposta em JSON", http.StatusInternalServerError)
-		return
-	}
-
+	// Define o cabeçalho da resposta 
+	JsonResponse(w, http.StatusCreated, users)
 }
 
 // UpdatePassword atualizar senha do usuário
 func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
-	// Id do token
+	// Extrai o id do usuário
 	userIdToken, err := auth.ExtractUserId(r)
 	if err != nil {
 		http.Error(w, "erro ao autenticar o usuário", http.StatusUnauthorized)
 		return
 	}
 
-	// Id do parâmetros
+	// Obtém o id dos parâmetros
 	params := mux.Vars(r)
 	userId, err := strconv.ParseUint(params["id"], 10, 64)
 	if err != nil {
@@ -465,6 +440,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Lê o corpo da requisição
 	corpusRequest, err := ioutil.ReadAll(r.Body)
 	var password models.Password
 	if err = json.Unmarshal(corpusRequest, &password); err != nil {
@@ -480,6 +456,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
+	// Repositório para atualizar a senha do usuário
 	repos := repositories.NewReposUsers(db)
 
 	// Verifica se o usuário existe
@@ -507,17 +484,14 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "erro ao adicionar o hash na senha", http.StatusBadRequest)
 		return
 	}
-
+	
+	// Atualização da senha no banco de dados
 	if err = repos.UpdatePassword(userId, string(passwordHash)); err != nil {
 		http.Error(w, "erro ao atualizar a senha", http.StatusInternalServerError)
 		return
 	}
 
-	// Serializar a resposta em JSON
-	w.Header().Set("Content-Type", "application/json")
+	// Define o cabeçalho da resposta 
 	w.WriteHeader(http.StatusOK)
-
-	w.Write([]byte(`"senha atualizada com sucesso"`))
-
+	json.NewEncoder(w).Encode("senha atualizada com sucesso")
 }
-

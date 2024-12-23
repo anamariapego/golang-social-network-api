@@ -49,14 +49,14 @@ var routesPublications = []Routes{
 		Function:       	controllers.GetPublicationByUser,
 		Authentication: 	true,
 	},
-	// Rota para curtir publicações dos usuários
+	// Rota para curtir publicações de um usuário
 	{
 		URI:            	"/publications/{id}/like",
 		Method:         	http.MethodPost,
 		Function:       	controllers.LikePublication,
 		Authentication: 	true,
 	},
-	// Rota para descurtir publicações
+	// Rota para descurtir publicações de um usuário
 	{
 		URI:            	"/publications/{id}/dislike",
 		Method:         	http.MethodPost,

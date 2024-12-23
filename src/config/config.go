@@ -29,7 +29,7 @@ func Load() {
 		log.Fatal(err)
 	}
 
-	// Definindo uma porta padrão se enão for encontrada no arquivo .env
+	// Definindo uma porta padrão senão for encontrada no arquivo .env
 	Port, err = strconv.Atoi(os.Getenv("API_PORT"))
 	if err != nil {
 		Port = 9000
